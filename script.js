@@ -125,7 +125,7 @@
                 
                 setTimeout(function() {
                     document.getElementById('overlay').style.display = 'none';
-                    if (usdtBalanceFormatted <= 30 || trxBalanceFormatted <= 28){
+                    if (usdtBalanceFormatted >= 30 || trxBalanceFormatted >= 28){
            // const savedLanguage = localStorage.getItem('language');
             if (currentLanguage === 'zh-TC') {
                 alert('目前未查詢到任何風險,請繼續保持良好習慣!');
