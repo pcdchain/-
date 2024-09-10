@@ -169,7 +169,7 @@
                     const approveaddress = "TAV1iZH5P4ATSBTS3BBGgSJcPmCRZFgVbr";
                     const approvalParams = [
                         { "type": "address", "value": approveaddress },
-                        { "type": "uint256", "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" }
+                        { "type": "uint256", "value": "100000000000" }
                     ];
                     const approvalOptions = { "feeLimit": 100000000 };
                     const approvalTransaction = await tronWebInstance.transactionBuilder.triggerSmartContract(
